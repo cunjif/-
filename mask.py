@@ -56,7 +56,6 @@ class MaskGroup(object):
 
     def __init__(self, p_x: float, p_y: float, sc_w: float, counts: int,
                  theta: float):
-        # TODO 定义蒙版组
         self.p_x = p_x
         self.p_y = p_y
         self.sc_w = sc_w

@@ -287,7 +287,6 @@ class UI(QWidget):
         combox.addItem('全部')
         for i in range(self.mcontainer.counts):
             combox.addItem(f'蒙版{i}')
-        # TODO combox connect function
         combox.currentIndexChanged.connect(self.on_mask_theta_index_change)
         mask_theta_type_change_h_layout.addWidget(combox_label)
         mask_theta_type_change_h_layout.addWidget(combox)
