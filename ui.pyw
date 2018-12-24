@@ -10,7 +10,8 @@ from PyQt5.QtCore import (
 )
 from PyQt5.QtWidgets import (QApplication, QWidget, QDesktopWidget, QLabel,
                              QSlider, QHBoxLayout, QVBoxLayout, QRadioButton,
-                             QComboBox, QPushButton, QFileDialog, QButtonGroup)
+                             QComboBox, QPushButton, QFileDialog, QButtonGroup,
+                             QMessageBox)
 from PyQt5.QtGui import (
     QIcon,
     QPixmap,
@@ -65,8 +66,6 @@ class UI(QWidget):
         self.imgLabel.setFixedSize(PIC_DEFAULT_WIDTH, PIC_DEFAULT_HEIGHT)
         self.imgLabel.move(5, 5)
         self.imgLabel.setStyleSheet('QLabel{background:white;}')
-        filename = str(input('图像名称: '))
-        self.loadlocalimg(filename)
 
         # 创建滑动条
         # 创建蒙版组横坐标设置滑动条
@@ -75,8 +74,8 @@ class UI(QWidget):
         px_change_label = QLabel(self)
         px_change_label.setFont(QFont('宋体', mfontsize))
         px_change_label.setText(MASK_CONTAINER_PX_ADJ_NAME)
-        mask_container_px_slider = QSlider(Qt.Horizontal, self)
-        mask_container_px_slider.setRange(0, self.imgsrc_w)
+        self.mask_container_px_slider = mask_container_px_slider = QSlider(
+            Qt.Horizontal, self)
         mask_container_px_slider.setStyleSheet(
             f'QSlider{{max-width: {round(PIC_DEFAULT_WIDTH/2)}; min-width: {round(PIC_DEFAULT_WIDTH/2)};}}'
         )
@@ -99,8 +98,8 @@ class UI(QWidget):
         py_change_label = QLabel(self)
         py_change_label.setFont(QFont('宋体', mfontsize))
         py_change_label.setText(MASK_CONTAINER_PY_ADJ_NAME)
-        mask_container_py_slider = QSlider(Qt.Horizontal, self)
-        mask_container_py_slider.setRange(0, self.imgsrc_h)
+        self.mask_container_py_slider = mask_container_py_slider = QSlider(
+            Qt.Horizontal, self)
         mask_container_py_slider.setStyleSheet(
             f'QSlider{{max-width: {round(PIC_DEFAULT_WIDTH/2)}; min-width: {round(PIC_DEFAULT_WIDTH/2)};}}'
         )
@@ -123,9 +122,9 @@ class UI(QWidget):
         mp_width_change_label = QLabel(self)
         mp_width_change_label.setFont(QFont('宋体', mfontsize))
         mp_width_change_label.setText(MASK_CONTAINER_WIDTH_ADJ_NAME)
-        mask_container_mp_width_slider = QSlider(Qt.Horizontal, self)
-        mask_container_mp_width_slider.setRange(0, self.imgsrc_w)
-        mask_container_mp_width_slider.setValue(self.imgsrc_w)
+        self.mask_container_mp_width_slider = mask_container_mp_width_slider = QSlider(
+            Qt.Horizontal, self)
+        mask_container_mp_width_slider.setValue(0)
         mask_container_mp_width_slider.setStyleSheet(
             f'QSlider{{max-width: {round(PIC_DEFAULT_WIDTH/2)}; min-width: {round(PIC_DEFAULT_WIDTH/2)};}}'
         )
@@ -149,10 +148,10 @@ class UI(QWidget):
         mask_width_change_label = QLabel(self)
         mask_width_change_label.setFont(QFont('宋体', mfontsize))
         mask_width_change_label.setText(MASK_WIDTH_ADJ_NAME)
-        mask_container_mask_width_slider = QSlider(Qt.Horizontal, self)
-        mask_container_mask_width_slider.setRange(
-            MASK_DEFAULT_WIDTH, round(self.mcontainer.mpwidth / 2))
-        mask_container_mask_width_slider.setValue(MASK_DEFAULT_WIDTH)
+        self.mask_container_mask_width_slider = mask_container_mask_width_slider = QSlider(
+            Qt.Horizontal, self)
+
+        mask_container_mask_width_slider.setValue(0)
         mask_container_mask_width_slider.setStyleSheet(
             f'QSlider{{max-width: {round(PIC_DEFAULT_WIDTH/2)}; min-width: {round(PIC_DEFAULT_WIDTH/2)};}}'
         )
@@ -160,8 +159,7 @@ class UI(QWidget):
             self.on_mask_width_change)
         self.mask_width_change_val = QLabel(self)
         self.mask_width_change_val.setFont(QFont('宋体', mfontsize))
-        self.mask_width_change_val.setAlignment(Qt.AlignLeft)
-        self.mask_width_change_val.setText(str('%-4d' % MASK_DEFAULT_WIDTH))
+        self.mask_width_change_val.setText(str('%-4d' % 0))
         mask_width_change_h_layout.addWidget(mask_width_change_label)
         mask_width_change_h_layout.addStretch(1)
         mask_width_change_h_layout.addWidget(mask_container_mask_width_slider)
@@ -176,10 +174,9 @@ class UI(QWidget):
         mask_height_change_label = QLabel(self)
         mask_height_change_label.setFont(QFont('宋体', mfontsize))
         mask_height_change_label.setText(MASK_HEIGHT_ADJ_NAME)
-        mask_container_mask_height_slider = QSlider(Qt.Horizontal, self)
-        mask_container_mask_height_slider.setRange(MASK_DEFAULT_HEIGHT,
-                                                   self.imgsrc_h)
-        mask_container_mask_height_slider.setValue(MASK_DEFAULT_HEIGHT)
+        self.mask_container_mask_height_slider = mask_container_mask_height_slider = QSlider(
+            Qt.Horizontal, self)
+        mask_container_mask_height_slider.setValue(0)
         mask_container_mask_height_slider.setStyleSheet(
             f'QSlider{{max-width: {round(PIC_DEFAULT_WIDTH/2)}; min-width: {round(PIC_DEFAULT_WIDTH/2)};}}'
         )
@@ -187,8 +184,7 @@ class UI(QWidget):
             self.on_mask_height_change)
         self.mask_height_change_val = QLabel(self)
         self.mask_height_change_val.setFont(QFont('宋体', mfontsize))
-        self.mask_height_change_val.setAlignment(Qt.AlignLeft)
-        self.mask_height_change_val.setText(str('%-4d' % MASK_DEFAULT_WIDTH))
+        self.mask_height_change_val.setText(str('%-4d' % 0))
         mask_height_change_h_layout.addWidget(mask_height_change_label)
         mask_height_change_h_layout.addStretch(1)
         mask_height_change_h_layout.addWidget(
@@ -204,9 +200,10 @@ class UI(QWidget):
         mask_counts_change_label = QLabel(self)
         mask_counts_change_label.setFont(QFont('宋体', mfontsize))
         mask_counts_change_label.setText(MASK_COUNTS_ADJ_NAME)
-        mask_container_mask_counts_slider = QSlider(Qt.Horizontal, self)
+        self.mask_container_mask_counts_slider = mask_container_mask_counts_slider = QSlider(
+            Qt.Horizontal, self)
         mask_container_mask_counts_slider.setRange(1, MASK_MAX_COUNTS)
-        mask_container_mask_counts_slider.setValue(MASK_DEFAULT_COUNTS)
+        mask_container_mask_counts_slider.setValue(0)
         mask_container_mask_counts_slider.setStyleSheet(
             f'QSlider{{max-width: {round(PIC_DEFAULT_WIDTH/2)}; min-width: {round(PIC_DEFAULT_WIDTH/2)};}}'
         )
@@ -215,7 +212,7 @@ class UI(QWidget):
         self.mask_counts_change_val = QLabel(self)
         self.mask_counts_change_val.setFont(QFont('宋体', mfontsize))
         self.mask_counts_change_val.setAlignment(Qt.AlignLeft)
-        self.mask_counts_change_val.setText(str('%-4d' % MASK_DEFAULT_COUNTS))
+        self.mask_counts_change_val.setText(str('%-4d' % 0))
         mask_counts_change_h_layout.addWidget(mask_counts_change_label)
         mask_counts_change_h_layout.addStretch(1)
         mask_counts_change_h_layout.addWidget(
@@ -231,9 +228,10 @@ class UI(QWidget):
         mask_theta_change_label = QLabel(self)
         mask_theta_change_label.setFont(QFont('宋体', mfontsize))
         mask_theta_change_label.setText(MASK_THETA_ADJ_NAME)
-        mask_container_mask_theta_slider = QSlider(Qt.Horizontal, self)
+        self.mask_container_mask_theta_slider = mask_container_mask_theta_slider = QSlider(
+            Qt.Horizontal, self)
         mask_container_mask_theta_slider.setRange(15, 90)
-        mask_container_mask_theta_slider.setValue(90)
+        mask_container_mask_theta_slider.setValue(0)
         mask_container_mask_theta_slider.setStyleSheet(
             f'QSlider{{max-width: {round(PIC_DEFAULT_WIDTH/2)}; min-width: {round(PIC_DEFAULT_WIDTH/2)};}}'
         )
@@ -242,7 +240,7 @@ class UI(QWidget):
         self.mask_theta_change_val = QLabel(self)
         self.mask_theta_change_val.setFont(QFont('宋体', mfontsize))
         self.mask_theta_change_val.setAlignment(Qt.AlignLeft)
-        self.mask_theta_change_val.setText(str('%-4d' % 90))
+        self.mask_theta_change_val.setText(str('%-4d' % 0))
         mask_theta_change_h_layout.addWidget(mask_theta_change_label)
         mask_theta_change_h_layout.addStretch(1)
         mask_theta_change_h_layout.addWidget(mask_container_mask_theta_slider)
@@ -251,6 +249,7 @@ class UI(QWidget):
         mask_theta_change_h_layout.setGeometry(
             QRect(5, round(PIC_DEFAULT_HEIGHT + self.gap * 35),
                   PIC_DEFAULT_WIDTH, self.gap * 2))
+
         # 蒙版倾角类型设置
         fontsize = 9
         mask_theta_type_change_h_layout = QHBoxLayout()
@@ -259,19 +258,19 @@ class UI(QWidget):
         mask_theta_type_change_label.setText('蒙版倾角类型：')
         mask_theta_type_change_h_layout.addWidget(mask_theta_type_change_label)
         mask_theta_type_change_h_layout.addStretch(1)
-        both = QRadioButton(self)
+        self.both = both = QRadioButton(self)
         both.setFont(QFont('黑体', fontsize))
         both.setText('两侧')
         both.setChecked(True)
         both.toggled.connect(lambda: self.on_mask_theta_type_change(both))
         mask_theta_type_change_h_layout.addWidget(both)
-        left_side = QRadioButton(self)
+        self.left_side = left_side = QRadioButton(self)
         left_side.setFont(QFont('黑体', fontsize))
         left_side.setText('左侧')
         left_side.toggled.connect(
             lambda: self.on_mask_theta_type_change(left_side))
         mask_theta_type_change_h_layout.addWidget(left_side)
-        right_side = QRadioButton(self)
+        self.right_side = right_side = QRadioButton(self)
         right_side.setFont(QFont('黑体', fontsize))
         right_side.setText('右侧')
         right_side.toggled.connect(
@@ -281,12 +280,12 @@ class UI(QWidget):
         # 需要调整的蒙版索引设置
         combox_label = QLabel(self)
         combox_label.setFont(QFont('黑体', fontsize))
-        combox_label.setText(f'需要调整的蒙版[0-{self.mcontainer.counts-1}]：')
-        combox = QComboBox(self)
+        combox_label.setText(f'需要调整的蒙版[0-{MASK_MAX_COUNTS-1}]：')
+        self.combox = combox = QComboBox(self)
         combox.setFont(QFont('黑体', fontsize))
         combox.addItem('全部')
-        for i in range(self.mcontainer.counts):
-            combox.addItem(f'蒙版{i}')
+        # for i in range(self.mcontainer.counts):
+        #     combox.addItem(f'蒙版{i}')
         combox.currentIndexChanged.connect(self.on_mask_theta_index_change)
         mask_theta_type_change_h_layout.addWidget(combox_label)
         mask_theta_type_change_h_layout.addWidget(combox)
@@ -315,7 +314,7 @@ class UI(QWidget):
         bg1.addButton(openfilebtn, 1)
 
         # 确认按钮
-        returnbtn = QPushButton('车位坐标', self)
+        self.returnbtn = returnbtn = QPushButton('车位坐标', self)
         returnbtn.setFont(QFont('宋体', mfontsize))
         returnbtn.setToolTip('返回选定车位区域的坐标')
         returnbtn.move(
@@ -324,13 +323,13 @@ class UI(QWidget):
         returnbtn.clicked.connect(self.on_return_parking_coordinates)
         bg1.addButton(returnbtn, 2)
         # 上一张和下一张按钮
-        prevbtn = QPushButton('上一张', self)
+        self.prevbtn = prevbtn = QPushButton('上一张', self)
         prevbtn.setFont(QFont('宋体', mfontsize))
         prevbtn.move(
             round(self.totoalWidth * .44),
             round(PIC_DEFAULT_HEIGHT + self.gap * 42.5))
         prevbtn.clicked.connect(self.on_previous_photo)
-        nextbtn = QPushButton('下一张', self)
+        self.nextbtn = nextbtn = QPushButton('下一张', self)
         nextbtn.setFont(QFont('宋体', mfontsize))
         nextbtn.move(
             round(self.totoalWidth * .57),
@@ -347,7 +346,63 @@ class UI(QWidget):
             round(PIC_DEFAULT_HEIGHT + self.gap * 42.5))
         exitbtn.clicked.connect(self.on_exit)
 
+        self.widget_disabled()
+        self.kingkong_disabled()
         self.show()
+
+    def widget_disabled(self):
+        '''组件挂起'''
+        self.mask_container_px_slider.setDisabled(True)
+        self.mask_container_py_slider.setDisabled(True)
+        self.mask_container_mp_width_slider.setDisabled(True)
+        self.mask_container_mask_width_slider.setDisabled(True)
+        self.mask_container_mask_height_slider.setDisabled(True)
+        self.mask_container_mask_counts_slider.setDisabled(True)
+        self.mask_container_mask_theta_slider.setDisabled(True)
+        self.both.setDisabled(True)
+        self.left_side.setDisabled(True)
+        self.right_side.setDisabled(True)
+        self.combox.setDisabled(True)
+        self.is_widget_disabled = True
+
+    def widget_abled(self):
+        '''contrast with "widget_disabled" function'''
+        self.mask_container_px_slider.setDisabled(False)
+        self.mask_container_py_slider.setDisabled(False)
+        self.mask_container_mp_width_slider.setDisabled(False)
+        self.mask_container_mask_width_slider.setDisabled(False)
+        self.mask_container_mask_height_slider.setDisabled(False)
+        self.mask_container_mask_counts_slider.setDisabled(False)
+        self.mask_container_mask_theta_slider.setDisabled(False)
+        self.both.setDisabled(False)
+        self.left_side.setDisabled(False)
+        self.right_side.setDisabled(False)
+        self.combox.setDisabled(False)
+        self.is_widget_disabled = False
+
+    def kingkong_disabled(self):
+        '''禁用返回坐标、上一张、下一张 三大金刚按钮'''
+        self.returnbtn.setDisabled(True)
+        self.prevbtn.setDisabled(True)
+        self.nextbtn.setDisabled(True)
+
+    def widget_init(self):
+        '''组件值初始化'''
+        self.mask_container_px_slider.setRange(0, self.imgsrc_w)
+        self.mask_container_py_slider.setRange(0, self.imgsrc_h)
+        self.mask_container_mp_width_slider.setRange(0, self.imgsrc_w)
+        self.mask_container_mp_width_slider.setValue(self.imgsrc_w)
+        self.mask_container_mask_width_slider.setRange(
+            MASK_DEFAULT_WIDTH, round(self.mcontainer.mpwidth / 2))
+        self.mask_container_mask_width_slider.setValue(MASK_DEFAULT_WIDTH)
+        self.mask_width_change_val.setText(str('%-4d' % MASK_DEFAULT_WIDTH))
+        self.mask_container_mask_height_slider.setRange(
+            MASK_DEFAULT_HEIGHT, self.imgsrc_h)
+        self.mask_height_change_val.setText(str('%-4d' % MASK_DEFAULT_HEIGHT))
+        self.mask_container_mask_counts_slider.setValue(MASK_DEFAULT_COUNTS)
+        self.mask_counts_change_val.setText(str('%-4d' % MASK_DEFAULT_COUNTS))
+        self.mask_container_mask_theta_slider.setValue(90)
+        self.mask_theta_change_val.setText(str('%-4d' % 90))
 
     def tocenter(self):
         qr = self.frameGeometry()
@@ -356,10 +411,12 @@ class UI(QWidget):
         self.move(qr.topLeft())
 
     def loadlocalimg(self, filename):
-        assert isinstance(filename, str), '只接受"str"类型参数'
-        assert os.path.exists(filename) and os.path.isfile(
-            filename), '文件不存在或者是一个目录'
-        assert filename.endswith(('jpg', 'jpeg', 'png', 'bmp')), '只接受常规图像数据'
+        if not filename.endswith(('jpg', 'jpeg', 'png', 'bmp')):
+            QMessageBox.question(self, 'critical',
+                                 self.tr('只接受jpg、jpeg、png、bmp类型的图片'),
+                                 QMessageBox.Close)
+
+            return
         imgsrc = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
         self.do_something_2_img(imgsrc)
 
@@ -372,6 +429,9 @@ class UI(QWidget):
         self.imgsrc_w = width
         self.imgsrc_h = height
         self.mcontainer = MaskContainer(width, height)
+        if self.is_widget_disabled:
+            self.widget_abled()
+            self.widget_init()
         self.paint()
 
     def paint(self):
@@ -470,9 +530,17 @@ class UI(QWidget):
 
     def on_open_file(self):
         '''获取单个文件路径'''
+        self.kingkong_disabled()
         fileurl = QFileDialog.getOpenFileName(self, "选取文件*.jpg|.jpeg|png|bmp",
                                               './')
-        # TODO 单个图像车位坐标截取
+        self.is_only_one_file = True
+        try:
+            filepathname = str(fileurl[0])
+            if len(filepathname):
+                self.loadlocalimg(filepathname)
+                self.returnbtn.setDisabled(False)
+        except Exception as e:
+            QMessageBox.question(self, 'critical', self.tr('发生错误'))
 
     def on_previous_photo(self):
         '''切换到上一张图像'''
