@@ -4,23 +4,28 @@
 import sys
 import os
 import cv2
+import glob
 from PyQt5.QtCore import (
     Qt,
     QRect,
+    QPropertyAnimation,
+    QEasingCurve,
+    QAbstractAnimation
 )
 from PyQt5.QtWidgets import (QApplication, QWidget, QDesktopWidget, QLabel,
                              QSlider, QHBoxLayout, QVBoxLayout, QRadioButton,
                              QComboBox, QPushButton, QFileDialog, QButtonGroup,
-                             QMessageBox)
+                             QMessageBox, QGraphicsOpacityEffect)
 from PyQt5.QtGui import (
     QIcon,
     QPixmap,
     QImage,
-    QFont,
+    QFont
 )
 import numpy as np
 from mask import MaskContainer
 from config import *
+from dbinfer import *
 
 MASK_CONTAINER_PX_ADJ_NAME = '蒙版组横坐标：'
 MASK_CONTAINER_PY_ADJ_NAME = '蒙版组纵坐标：'
@@ -52,6 +57,7 @@ class UI(QWidget):
         PIC_DEFAULT_HEIGHT = round(PARKING_PART_DEFAULT_HEIGHT / 2)
         self.gap = round(PARKING_PART_DEFAULT_HEIGHT / 100)
         self.totoalWidth = PARKING_PART_DEFAULT_WIDTH
+        self.db = DB()
         self.oncreate()
 
     def oncreate(self):
@@ -316,7 +322,7 @@ class UI(QWidget):
         # 确认按钮
         self.returnbtn = returnbtn = QPushButton('车位坐标', self)
         returnbtn.setFont(QFont('宋体', mfontsize))
-        returnbtn.setToolTip('返回选定车位区域的坐标')
+        returnbtn.setToolTip('截取车位坐标')
         returnbtn.move(
             round(self.totoalWidth * .31),
             round(PIC_DEFAULT_HEIGHT + self.gap * 42.5))
@@ -335,20 +341,71 @@ class UI(QWidget):
             round(self.totoalWidth * .57),
             round(PIC_DEFAULT_HEIGHT + self.gap * 42.5))
         nextbtn.clicked.connect(self.on_next_photo)
-        bg1.addButton(prevbtn, 3)
+        self.outputbtn = outputbtn = QPushButton('导出', self)
+        outputbtn.setFont(QFont('宋体', mfontsize))
+        outputbtn.move(
+            round(self.totoalWidth * .70),
+            round(PIC_DEFAULT_HEIGHT + self.gap * 42.5))
+        outputbtn.clicked.connect(self.on_output_cors)
+        bg1.addButton(prevbtn, 2)
         bg1.addButton(nextbtn, 3)
+        bg1.addButton(outputbtn, 4)
+
+        # 顶部动态文本提示框
+        self.dynmic_tip = QLabel(self)
+        self.dynmic_tip.setFixedSize(round(PIC_DEFAULT_WIDTH/3), 32)
+        self.dynmic_tip.move(round(PIC_DEFAULT_WIDTH/3), 10)
+        self.dynmic_tip.setStyleSheet('QLabel{background: #470024; color: white;}')
+        self.dynmic_tip.setAlignment(Qt.AlignCenter)
+        self.dynmic_tip.setFont(QFont('宋体', 15))
+        # self.dynmic_tip.setVisible(False)
+        qgoe = QGraphicsOpacityEffect(self.dynmic_tip)
+        qgoe.setOpacity(0)
+        self.dynmic_tip.setGraphicsEffect(qgoe)
+        self.anime1 = QPropertyAnimation(qgoe, b'opacity', self)
+        self.anime1.setEasingCurve(QEasingCurve.Linear)
+        self.anime1.setDuration(1500)
+
         # 退出按钮
         exitbtn = QPushButton('退出', self)
         exitbtn.setFont(QFont('宋体', mfontsize))
         exitbtn.setToolTip('退出程序(建议在所有车位坐标获取之后)')
         exitbtn.move(
-            round(self.totoalWidth * .75),
+            round(self.totoalWidth * .83),
             round(PIC_DEFAULT_HEIGHT + self.gap * 42.5))
         exitbtn.clicked.connect(self.on_exit)
+
+        old_cors_file_import_btn = QPushButton('导入已有数据', self)
+        old_cors_file_import_btn.setFont(QFont('仿宋', 10))
+        old_cors_file_import_btn.adjustSize()
+        old_cors_file_import_btn.setToolTip('退出程序(建议在所有车位坐标获取之后)')
+        old_cors_file_import_btn.move(
+            round(self.totoalWidth * .83),
+            round(PIC_DEFAULT_HEIGHT)+8)
+        old_cors_file_import_btn.clicked.connect(self.on_import_old_cors_file)
 
         self.widget_disabled()
         self.kingkong_disabled()
         self.show()
+
+        # while True:
+        #     rel = QMessageBox.question(self, 'information', self.tr('是否导入旧的车位坐标文件'), 
+        #         QMessageBox.Yes|QMessageBox.No)
+        #     if rel == QMessageBox.Yes:
+        #         filepath = QFileDialog.getOpenFileName(self, '车位坐标文件*.json', './')
+        #         if len(filepath)>1:
+        #             filepath = filepath[0]
+        #             try:
+        #                 with open(filepath, 'r', encoding='utf-8') as fp:
+        #                     old_data = json.dump(fp)
+        #                 self.db.update(old_data)
+        #             except:
+        #                 QMessageBox.question(self, 'critical', self.tr('文件出现错误，重新选择！'), QMessageBox.Close)
+        #         else:
+        #             break
+        #     else:
+        #         break
+
 
     def widget_disabled(self):
         '''组件挂起'''
@@ -417,6 +474,7 @@ class UI(QWidget):
                                  QMessageBox.Close)
 
             return
+        self.imgsrc_label = opath.basename(filename)
         imgsrc = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
         self.do_something_2_img(imgsrc)
 
@@ -461,6 +519,19 @@ class UI(QWidget):
                      QImage.Format_RGB888)
         img = QPixmap.fromImage(img)
         return img
+
+    def on_import_old_cors_file(self):
+        '''导入已有的数据文件'''
+        filepath = QFileDialog.getOpenFileName(self, '已有数据文件*.json', './')
+        filepath:str = filepath[0]
+        if filepath.strip():
+            try:
+                with open(filepath, 'r', encoding='utf-8') as fp:
+                    old_data:dict = json.dump(fp)
+                self.db.update(old_data)
+                self.start_dynamic_tip_anime()
+            except:
+                QMessageBox.question(self, 'critical', self.tr('文件格式错误！'), QMessageBox.Close)
 
     def on_px_change(self, val):
         '''调节蒙版框横坐标'''
@@ -533,7 +604,6 @@ class UI(QWidget):
         self.kingkong_disabled()
         fileurl = QFileDialog.getOpenFileName(self, "选取文件*.jpg|.jpeg|png|bmp",
                                               './')
-        self.is_only_one_file = True
         try:
             filepathname = str(fileurl[0])
             if len(filepathname):
@@ -551,10 +621,49 @@ class UI(QWidget):
         '''切换到下一张图像'''
         pass
 
+    def start_dynamic_tip_anime(self):
+        '''启动顶部动态消息提示框动画'''
+        self.anime1.setStartValue(1)
+        self.anime1.setEndValue(0)
+        self.anime1.start(QAbstractAnimation.KeepWhenStopped)
+
     def on_return_parking_coordinates(self):
         '''返回车位区域坐标'''
-        # TODO 车位坐标
-        pass
+        try: 
+            self.db.add(self.imgsrc_label, self.mcontainer.coordinates)
+            self.dynmic_tip.setText('获取成功！')
+            self.start_dynamic_tip_anime()
+        except:
+            pass
+
+    def on_output_cors(self):
+        '''导出坐标数据到数据持久化文件'''
+        try:
+            if self.db.has():
+                while True:
+                    rel1 = QMessageBox.question(self, '', self.tr('是否选择一个导出的目录？（默认导出到当前目录）'), QMessageBox.Yes|QMessageBox.No)
+                    if rel == QMessageBox.Yes:
+                        directory = QFileDialog.getExistingDirectory(self, '导出目录', './')
+                    else:
+                        directory = './'
+                    if not opath.exists(opath.join(directory, self.db.dbfile)):
+                        break
+                    else:
+                        rel2 = QMessageBox.question(self, 'warning', self.tr('选择的目录存在同名文件，是否覆盖？'), QMessageBox.Yes|QMessageBox.No)
+                        if rel2 == QMessageBox.No:
+                            break
+                self.db.output(directory)
+                resp = QMessageBox.question(
+                    self, 
+                    'information', 
+                    self.tr('导出成功！\n是否打开文件夹'), 
+                    QMessageBox.Yes|QMessageBox.No)
+                # if resp == QMessageBox.Yes:
+
+            else:
+                QMessageBox.question(self, 'information', self.tr('没有需要导出的数据！'), QMessageBox.Close)
+        except: 
+            pass
 
     def on_exit(self):
         '''退出程序功能'''
