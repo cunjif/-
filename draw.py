@@ -16,6 +16,7 @@ MASK_COUNTS_ADJ_NAME = 'MaskCounts: '
 src = None
 mcontainer = None
 
+
 def on_px_change(val):
     '''调节蒙板框横坐标'''
     mcontainer.px = val
@@ -33,6 +34,7 @@ def on_mp_width_change(val):
     mcontainer.mpwidth = val
     paint()
 
+
 def on_mask_width_change(val):
     '''设置蒙版宽度'''
     mcontainer.mask_width = val
@@ -47,7 +49,7 @@ def on_mask_height_change(val):
 
 def on_mask_theta_change(val):
     '''设置蒙板的倾角'''
-    theta = val/180 * np.pi
+    theta = val / 180 * np.pi
     mcontainer.theta = theta
     paint()
 
@@ -67,8 +69,8 @@ def paint():
     for e in cors:
         cors = e[:-2]
         cors = np.array(cors, dtype=int)
-        cors = cors.reshape((-1,1,2))
-        cv2.polylines(csrc, [cors], True, (0,0,255), 3)
+        cors = cors.reshape((-1, 1, 2))
+        cv2.polylines(csrc, [cors], True, (0, 0, 255), 3)
     cv2.imshow(PARKING_PART_WINDOW_NAME, csrc)
 
 
@@ -77,7 +79,7 @@ def draw(filename):
     assert opath.exists(filename), '输入文件不存在！'
     assert opath.isfile(filename), '输入参数不是一个文件'
     assert filename.endswith(('jpeg', 'jpg', 'bmp', 'png')), '只接受图像文件'
-    
+
     global src
     global mcontainer
     src = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
@@ -90,61 +92,37 @@ def draw(filename):
     # 命名显示窗口
     cv2.namedWindow(PARKING_PART_WINDOW_NAME, 0)
     # 设置显示窗口大小
-    cv2.resizeWindow(
-        PARKING_PART_WINDOW_NAME,
-        PARKING_PART_DEFAULT_WIDTH,
-        PARKING_PART_DEFAULT_HEIGHT)
-    
-    # 蒙板框横坐标设置滑条
-    cv2.createTrackbar(
-        MASK_CONTAINER_PX_ADJ_NAME, 
-        PARKING_PART_WINDOW_NAME, 
-        MASK_POS_X, scw, on_px_change)
-    # 蒙板框纵坐标设置滑条
-    cv2.createTrackbar(
-        MASK_CONTAINER_PY_ADJ_NAME,
-        PARKING_PART_WINDOW_NAME,
-        MASK_POS_Y,
-        sch, on_py_change)
-    # 蒙板组宽度设置滑条
-    cv2.createTrackbar(
-        MASK_CONTAINER_WIDTH_ADJ_NAME,
-        PARKING_PART_WINDOW_NAME,
-        sch, sch,
-        on_mp_width_change)
-    # 单个蒙板宽度设置滑条
-    cv2.createTrackbar(
-        MASK_WIDTH_ADJ_NAME,
-        PARKING_PART_WINDOW_NAME,
-        MASK_DEFAULT_WIDTH,
-        round(scw/(MASK_COUNTS+1)),
-        on_mask_width_change)
-    # 单个蒙板高度设置滑条
-    cv2.createTrackbar(
-        MASK_HEIGHT_ADJ_NAME,
-        PARKING_PART_WINDOW_NAME,
-        MASK_DEFAULT_WIDTH,
-        sch,
-        on_mask_height_change)
-    # 蒙板倾角
-    cv2.createTrackbar(
-        MASK_THETA_ADJ_NAME,
-        PARKING_PART_WINDOW_NAME,
-        90,
-        90,
-        on_mask_theta_change)
-    # 蒙板数量设置滑条
-    cv2.createTrackbar(
-        MASK_COUNTS_ADJ_NAME,
-        PARKING_PART_WINDOW_NAME,
-        MASK_COUNTS,
-        MASK_COUNTS,
-        on_mask_counts_change)
+    cv2.resizeWindow(PARKING_PART_WINDOW_NAME, PARKING_PART_DEFAULT_WIDTH,
+                     PARKING_PART_DEFAULT_HEIGHT)
 
-    paint()
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    exit()
-    
+    # 蒙板框横坐标设置滑条
+    cv2.createTrackbar(MASK_CONTAINER_PX_ADJ_NAME, PARKING_PART_WINDOW_NAME,
+                       MASK_POS_X, scw, on_px_change)
+    # 蒙板框纵坐标设置滑条
+    cv2.createTrackbar(MASK_CONTAINER_PY_ADJ_NAME, PARKING_PART_WINDOW_NAME,
+                       MASK_POS_Y, sch, on_py_change)
+    # 蒙板组宽度设置滑条
+    cv2.createTrackbar(MASK_CONTAINER_WIDTH_ADJ_NAME, PARKING_PART_WINDOW_NAME,
+                       sch, sch, on_mp_width_change)
+    # 单个蒙板宽度设置滑条
+    cv2.createTrackbar(MASK_WIDTH_ADJ_NAME,
+                       PARKING_PART_WINDOW_NAME, MASK_DEFAULT_WIDTH,
+                       round(scw / (MASK_COUNTS + 1)), on_mask_width_change)
+    # 单个蒙板高度设置滑条
+    cv2.createTrackbar(MASK_HEIGHT_ADJ_NAME, PARKING_PART_WINDOW_NAME,
+                       MASK_DEFAULT_WIDTH, sch, on_mask_height_change)
+    # 蒙板倾角
+    cv2.createTrackbar(MASK_THETA_ADJ_NAME, PARKING_PART_WINDOW_NAME, 90, 90,
+                       on_mask_theta_change)
+    # 蒙板数量设置滑条
+    cv2.createTrackbar(MASK_COUNTS_ADJ_NAME, PARKING_PART_WINDOW_NAME,
+                       MASK_COUNTS, MASK_COUNTS, on_mask_counts_change)
+
+    # paint()
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+    # exit()
+
+
 if __name__ == '__main__':
     draw('2.jpg')

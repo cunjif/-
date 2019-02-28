@@ -1,27 +1,17 @@
-# -*-coding:utf-8-*-
+# -*- coding: utf-8 -*-
 '''QT重绘draw模块'''
 
 import sys
 import os
 import cv2
 import glob
-from PyQt5.QtCore import (
-    Qt,
-    QRect,
-    QPropertyAnimation,
-    QEasingCurve,
-    QAbstractAnimation
-)
+from PyQt5.QtCore import (Qt, QRect, QPropertyAnimation, QEasingCurve,
+                          QAbstractAnimation)
 from PyQt5.QtWidgets import (QApplication, QWidget, QDesktopWidget, QLabel,
                              QSlider, QHBoxLayout, QVBoxLayout, QRadioButton,
                              QComboBox, QPushButton, QFileDialog, QButtonGroup,
                              QMessageBox, QGraphicsOpacityEffect)
-from PyQt5.QtGui import (
-    QIcon,
-    QPixmap,
-    QImage,
-    QFont
-)
+from PyQt5.QtGui import (QIcon, QPixmap, QImage, QFont)
 import numpy as np
 from mask import MaskContainer
 from config import *
@@ -236,7 +226,7 @@ class UI(QWidget):
         mask_theta_change_label.setText(MASK_THETA_ADJ_NAME)
         self.mask_container_mask_theta_slider = mask_container_mask_theta_slider = QSlider(
             Qt.Horizontal, self)
-        mask_container_mask_theta_slider.setRange(15, 90)
+        mask_container_mask_theta_slider.setRange(-90, 90)
         mask_container_mask_theta_slider.setValue(0)
         mask_container_mask_theta_slider.setStyleSheet(
             f'QSlider{{max-width: {round(PIC_DEFAULT_WIDTH/2)}; min-width: {round(PIC_DEFAULT_WIDTH/2)};}}'
@@ -273,14 +263,14 @@ class UI(QWidget):
         self.left_side = left_side = QRadioButton(self)
         left_side.setFont(QFont('黑体', fontsize))
         left_side.setText('左侧')
-        left_side.toggled.connect(
-            lambda: self.on_mask_theta_type_change(left_side))
+        left_side.toggled.connect(lambda: self.on_mask_theta_type_change(
+            left_side))
         mask_theta_type_change_h_layout.addWidget(left_side)
         self.right_side = right_side = QRadioButton(self)
         right_side.setFont(QFont('黑体', fontsize))
         right_side.setText('右侧')
-        right_side.toggled.connect(
-            lambda: self.on_mask_theta_type_change(right_side))
+        right_side.toggled.connect(lambda: self.on_mask_theta_type_change(
+            right_side))
         mask_theta_type_change_h_layout.addWidget(right_side)
         mask_theta_type_change_h_layout.addStretch(1)
         # 需要调整的蒙版索引设置
@@ -353,9 +343,10 @@ class UI(QWidget):
 
         # 顶部动态文本提示框
         self.dynmic_tip = QLabel(self)
-        self.dynmic_tip.setFixedSize(round(PIC_DEFAULT_WIDTH/3), 32)
-        self.dynmic_tip.move(round(PIC_DEFAULT_WIDTH/3), 10)
-        self.dynmic_tip.setStyleSheet('QLabel{background: #470024; color: white;}')
+        self.dynmic_tip.setFixedSize(round(PIC_DEFAULT_WIDTH / 3), 32)
+        self.dynmic_tip.move(round(PIC_DEFAULT_WIDTH / 3), 10)
+        self.dynmic_tip.setStyleSheet(
+            'QLabel{background: #470024; color: white;}')
         self.dynmic_tip.setAlignment(Qt.AlignCenter)
         self.dynmic_tip.setFont(QFont('宋体', 15))
         # self.dynmic_tip.setVisible(False)
@@ -381,31 +372,12 @@ class UI(QWidget):
         old_cors_file_import_btn.setToolTip('退出程序(建议在所有车位坐标获取之后)')
         old_cors_file_import_btn.move(
             round(self.totoalWidth * .83),
-            round(PIC_DEFAULT_HEIGHT)+8)
+            round(PIC_DEFAULT_HEIGHT) + 8)
         old_cors_file_import_btn.clicked.connect(self.on_import_old_cors_file)
 
         self.widget_disabled()
         self.kingkong_disabled()
         self.show()
-
-        # while True:
-        #     rel = QMessageBox.question(self, 'information', self.tr('是否导入旧的车位坐标文件'), 
-        #         QMessageBox.Yes|QMessageBox.No)
-        #     if rel == QMessageBox.Yes:
-        #         filepath = QFileDialog.getOpenFileName(self, '车位坐标文件*.json', './')
-        #         if len(filepath)>1:
-        #             filepath = filepath[0]
-        #             try:
-        #                 with open(filepath, 'r', encoding='utf-8') as fp:
-        #                     old_data = json.dump(fp)
-        #                 self.db.update(old_data)
-        #             except:
-        #                 QMessageBox.question(self, 'critical', self.tr('文件出现错误，重新选择！'), QMessageBox.Close)
-        #         else:
-        #             break
-        #     else:
-        #         break
-
 
     def widget_disabled(self):
         '''组件挂起'''
@@ -460,6 +432,8 @@ class UI(QWidget):
         self.mask_counts_change_val.setText(str('%-4d' % MASK_DEFAULT_COUNTS))
         self.mask_container_mask_theta_slider.setValue(90)
         self.mask_theta_change_val.setText(str('%-4d' % 90))
+        for i in range(self.mcontainer.counts):
+            self.combox.addItem(f'蒙版{i}')
 
     def tocenter(self):
         qr = self.frameGeometry()
@@ -474,7 +448,7 @@ class UI(QWidget):
                                  QMessageBox.Close)
 
             return
-        self.imgsrc_label = opath.basename(filename)
+        self.imgsrc_label = opath.splitext(opath.basename(filename))[0]
         imgsrc = cv2.imread(filename, cv2.IMREAD_UNCHANGED)
         self.do_something_2_img(imgsrc)
 
@@ -523,15 +497,16 @@ class UI(QWidget):
     def on_import_old_cors_file(self):
         '''导入已有的数据文件'''
         filepath = QFileDialog.getOpenFileName(self, '已有数据文件*.json', './')
-        filepath:str = filepath[0]
+        filepath: str = filepath[0]
         if filepath.strip():
             try:
                 with open(filepath, 'r', encoding='utf-8') as fp:
-                    old_data:dict = json.dump(fp)
+                    old_data: dict = json.dump(fp)
                 self.db.update(old_data)
                 self.start_dynamic_tip_anime()
             except:
-                QMessageBox.question(self, 'critical', self.tr('文件格式错误！'), QMessageBox.Close)
+                QMessageBox.question(self, 'critical', self.tr('文件格式错误！'),
+                                     QMessageBox.Close)
 
     def on_px_change(self, val):
         '''调节蒙版框横坐标'''
@@ -597,7 +572,29 @@ class UI(QWidget):
     def on_open_directory(self):
         '''获取文件所在目录或单个文件路径'''
         directory = QFileDialog.getExistingDirectory(self, "选取文件夹", './')
-        # TODO 获取文件目录所有图像文件并作车位截取
+        self.images = [
+            img for img in glob.glob(opath.join(directory, "*.*"))
+            if img.endswith('.jpg') or img.endswith('.png')
+        ]
+        self.totalIdx = len(self.images)
+        self.imgIdx = 0
+        self.loadImageFromPackage()
+
+    def loadImageFromPackage(self):
+        '''从图片文件夹文件列表中加载、显示和处理指定下标的图片文件'''
+        try:
+            self.loadlocalimg(self.images[self.imgIdx])
+            if self.imgIdx > 0 and self.imgIdx < self.totalIdx - 1:
+                self.prevbtn.setDisabled(False)
+                self.nextbtn.setDisabled(False)
+            elif self.imgIdx <= 0:
+                self.prevbtn.setDisabled(True)
+                self.nextbtn.setDisabled(False)
+            else:
+                self.prevbtn.setDisabled(False)
+                self.nextbtn.setDisabled(True)
+        except AttributeError as e:
+            pass
 
     def on_open_file(self):
         '''获取单个文件路径'''
@@ -614,12 +611,15 @@ class UI(QWidget):
 
     def on_previous_photo(self):
         '''切换到上一张图像'''
-        # TODO
-        pass
+        if self.imgIdx > 0:
+            self.imgIdx -= 1
+            self.loadImageFromPackage()
 
     def on_next_photo(self):
         '''切换到下一张图像'''
-        pass
+        if self.imgIdx < self.totalIdx - 1:
+            self.imgIdx += 1
+            self.loadImageFromPackage()
 
     def start_dynamic_tip_anime(self):
         '''启动顶部动态消息提示框动画'''
@@ -629,7 +629,7 @@ class UI(QWidget):
 
     def on_return_parking_coordinates(self):
         '''返回车位区域坐标'''
-        try: 
+        try:
             self.db.add(self.imgsrc_label, self.mcontainer.coordinates)
             self.dynmic_tip.setText('获取成功！')
             self.start_dynamic_tip_anime()
@@ -641,28 +641,32 @@ class UI(QWidget):
         try:
             if self.db.has():
                 while True:
-                    rel1 = QMessageBox.question(self, '', self.tr('是否选择一个导出的目录？（默认导出到当前目录）'), QMessageBox.Yes|QMessageBox.No)
-                    if rel == QMessageBox.Yes:
-                        directory = QFileDialog.getExistingDirectory(self, '导出目录', './')
+                    rel1 = QMessageBox.question(
+                        self, '', self.tr('是否选择一个导出的目录？（默认导出到当前目录）'),
+                        QMessageBox.Yes | QMessageBox.No)
+                    if rel1 == QMessageBox.Yes:
+                        directory = QFileDialog.getExistingDirectory(
+                            self, '导出目录', './')
                     else:
                         directory = './'
                     if not opath.exists(opath.join(directory, self.db.dbfile)):
                         break
                     else:
-                        rel2 = QMessageBox.question(self, 'warning', self.tr('选择的目录存在同名文件，是否覆盖？'), QMessageBox.Yes|QMessageBox.No)
+                        rel2 = QMessageBox.question(
+                            self, 'warning', self.tr('选择的目录存在同名文件，是否覆盖？'),
+                            QMessageBox.Yes | QMessageBox.No)
                         if rel2 == QMessageBox.No:
                             break
                 self.db.output(directory)
-                resp = QMessageBox.question(
-                    self, 
-                    'information', 
-                    self.tr('导出成功！\n是否打开文件夹'), 
-                    QMessageBox.Yes|QMessageBox.No)
+                resp = QMessageBox.question(self, 'information',
+                                            self.tr('导出成功！\n是否打开文件夹'),
+                                            QMessageBox.Yes | QMessageBox.No)
                 # if resp == QMessageBox.Yes:
 
             else:
-                QMessageBox.question(self, 'information', self.tr('没有需要导出的数据！'), QMessageBox.Close)
-        except: 
+                QMessageBox.question(self, 'information',
+                                     self.tr('没有需要导出的数据！'), QMessageBox.Close)
+        except:
             pass
 
     def on_exit(self):

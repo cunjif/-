@@ -204,7 +204,10 @@ class MaskGroup(object):
             else:
                 bl = [round(e.c_x - hw), round(e.c_y + hh)]
                 br = [round(e.c_x + hw), round(e.c_y + hh)]
-            cors.append([tl, tr, br, bl, [round(e.c_x), round(e.c_y)], e.no])
+            cors.append([
+                tl, tr, br, bl, [round(e.c_x), round(e.c_y)],
+                e.height * (tr[0] - tl[0] + br[0] - bl[0]) * .5, e.no
+            ])
         return cors
 
     def __str__(self):
