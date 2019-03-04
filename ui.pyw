@@ -470,7 +470,7 @@ class UI(QWidget):
         cimg = self.imgsrc.copy()
         cors = self.mcontainer.coordinates
         for e in cors:
-            c = e[:-2]
+            c = e[:-3]
             c = np.array(c, dtype=np.int32)
             c = c.reshape((-1, 1, 2))
             cv2.polylines(cimg, [c], True, (0, 0, 255), 3)
@@ -656,18 +656,22 @@ class UI(QWidget):
                             self, 'warning', self.tr('选择的目录存在同名文件，是否覆盖？'),
                             QMessageBox.Yes | QMessageBox.No)
                         if rel2 == QMessageBox.No:
+                            return
+                        else:
                             break
                 self.db.output(directory)
                 resp = QMessageBox.question(self, 'information',
                                             self.tr('导出成功！\n是否打开文件夹'),
                                             QMessageBox.Yes | QMessageBox.No)
-                # if resp == QMessageBox.Yes:
-
+                if resp == QMessageBox.Yes:
+                    if sys.platform == 'win32':
+                        directory = directory.replace('/', '\\')
+                        os.system(f'explorer {directory}')
             else:
                 QMessageBox.question(self, 'information',
                                      self.tr('没有需要导出的数据！'), QMessageBox.Close)
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
     def on_exit(self):
         '''退出程序功能'''
